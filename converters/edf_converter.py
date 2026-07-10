@@ -13,7 +13,7 @@ try:
 except ImportError:
     pyedflib = None
 
-
+# pylint: disable=too-many-positional-arguments
 def convert_edf(file_path, channels=None, organism=None, species=None,
                 recording_type=None, units=None, source=None):
     """

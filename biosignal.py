@@ -228,6 +228,7 @@ class BioSignal:
         return signal
 
     def info(self) -> None:
+        """Print information about the all the BioSingal attributes."""
         print("BioSignal Information:")
         print(f"  Organism: {self.metadata.organism}")
         print(f"  Species: {self.metadata.species}")

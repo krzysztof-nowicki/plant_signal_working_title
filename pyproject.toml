@@ -12,3 +12,7 @@ max-args = 10
 max-attributes = 15
 max-statements = 80
 max-locals = 30
+max-branches = 20
+
+[tool.pylint.similarities]
+min-similarity-lines = 10
