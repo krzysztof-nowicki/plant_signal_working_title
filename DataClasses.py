@@ -13,8 +13,8 @@ class BioSignal:
     units = None
     source = None
     metadata = None
-    
-    def __init__(self, signal, fs, channels, time=None, organism=None, species=None, 
+
+    def __init__(self, signal, fs, channels, time=None, organism=None, species=None,
                  recording_type=None, units=None, source=None, metadata=None):
         self.signal = signal
         self.fs = fs
@@ -26,23 +26,23 @@ class BioSignal:
         self.units = units or "unknown"
         self.source = source or "unknown"
         self.metadata = metadata or {}
-    
+
     def _generate_time_axis(self):
         """Generate time axis based on signal length and sampling rate."""
         if self.signal is None or self.fs is None:
             return None
         n_samples = self.signal.shape[0]
         return np.linspace(0, n_samples / self.fs, n_samples, dtype=np.float64)
-    
+
     # Backward compatibility properties
     @property
     def fd(self):
         return self.fs
-    
+
     @property
     def sample_rate(self):
         return self.fs
-    
+
     def save(self, file_path):
         """
         Save BioSignal to NPZ file with rich metadata schema.
@@ -63,7 +63,7 @@ class BioSignal:
             source=self.source,
             metadata=np.array(self.metadata, dtype=object)
         )
-    
+
     @staticmethod
     def load(file_path):
         """
@@ -76,9 +76,9 @@ class BioSignal:
             BioSignal object
         """
         data = np.load(file_path, allow_pickle=True)
-        
+
         time = data['time'] if len(data['time']) > 0 else None
-        
+
         return BioSignal(
             signal=data['signal'],
             fs=float(data['fs']),
@@ -143,7 +143,7 @@ class BioSignal:
 
         if max_signal is not None:
             signal = self._normalize_signal(signal, max_signal)
-        
+
         plt.figure(figsize=(10, 6))
         for i, channel in enumerate(self.channels):
             plt.subplot(len(self.channels), 1, i + 1)
@@ -155,7 +155,7 @@ class BioSignal:
 
         plt.tight_layout()
         plt.show()
-    
+
     def _resample_signal(self, signal, target_samples):
         """
         Resample signal to have exactly target_samples samples.
@@ -173,12 +173,12 @@ class BioSignal:
 
         old_indices = np.linspace(0, signal.shape[0] - 1, signal.shape[0])
         new_indices = np.linspace(0, signal.shape[0] - 1, target_samples)
-        
+
         for i in range(n_channels):
             resampled[:, i] = np.interp(new_indices, old_indices, signal[:, i])
-        
+
         return resampled
-    
+
     def _normalize_signal(self, signal, max_value):
         """
         Normalize signal so that the largest absolute value equals max_value.
@@ -192,10 +192,10 @@ class BioSignal:
             Normalized signal array
         """
         current_max = np.max(np.abs(signal))
-        
+
         if current_max > 0:
             signal = signal * (max_value / current_max)
-        
+
         return signal
 
     def info(self):
