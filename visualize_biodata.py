@@ -7,6 +7,6 @@ the convenience info/plot helpers.
 from biosignal import BioSignal
 
 
-biosignal = BioSignal.load(r"D:\Planty\PlantyProject\data_converted\data.npz")
+biosignal = BioSignal.load(r"D:\Planty\data_converted\data.npz")
 biosignal.info()
 biosignal.plot()  # biosignal.plot_original()

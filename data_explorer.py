@@ -7,7 +7,7 @@ list files and print simple statistics from the conversion report.
 from biosignal_database import BioSignalDatabase
 
 
-database = BioSignalDatabase(data_folder="./PlantyProject/data_converted")
+database = BioSignalDatabase(data_folder="./data_converted")
 
 database.list_all()
 print(database.get_statistics())

@@ -60,8 +60,10 @@ def convert_csv(
         "n_channels": signal.shape[1],
     }
 
-    return BioSignal(
-        signal=signal,  # (samples, channels)
+    # Use the new structured BioSignal factory which accepts primitive
+    # parts and builds Signal/Metadata internally.
+    return BioSignal.from_parts(
+        values=signal,
         fs=fs,
         channels=channels,
         time=time,
@@ -70,5 +72,5 @@ def convert_csv(
         recording_type=recording_type or "Differential CSV",
         units=units or "unknown",
         source=source or "CSV_data",
-        metadata=metadata
+        extra=metadata,
     )

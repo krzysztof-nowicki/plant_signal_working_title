@@ -85,8 +85,8 @@ def convert_edf(file_path, channels=None, organism=None, species=None,
         'original_format': 'EDF'
     }
 
-    return BioSignal(
-        signal=signal,
+    return BioSignal.from_parts(
+        values=signal,
         fs=fs,
         channels=channel_names if channel_names else channels,
         time=time,
@@ -95,5 +95,5 @@ def convert_edf(file_path, channels=None, organism=None, species=None,
         recording_type=recording_type or "EDF",
         units=units or "µV",
         source=source or "EDF_recording",
-        metadata=metadata
+        extra=metadata,
     )

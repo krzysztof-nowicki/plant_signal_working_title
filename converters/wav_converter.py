@@ -55,8 +55,8 @@ def convert_wav(file_path, channels=None, organism=None, species=None,
         'original_format': 'WAV'
     }
 
-    return BioSignal(
-        signal=audio_array.T,
+    return BioSignal.from_parts(
+        values=audio_array.T,
         fs=fs,
         channels=channels,
         time=time,
@@ -65,5 +65,5 @@ def convert_wav(file_path, channels=None, organism=None, species=None,
         recording_type=recording_type or "WAV",
         units=units or "unknown",
         source=source or "WAV_recording",
-        metadata=metadata
+        extra=metadata,
     )

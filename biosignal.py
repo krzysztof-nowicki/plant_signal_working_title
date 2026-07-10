@@ -1,126 +1,163 @@
-"""Core BioSignal container and helpers.
+"""Structured BioSignal container with smaller, focused data classes.
 
-This module provides the BioSignal class used across the project to
-represent multichannel time series along with simple I/O and plotting
-utilities.
-
-The module name is intentionally kept PascalCase for historical
-compatibility with the rest of the project; pylint's "invalid-name"
-warning is disabled for the module.
+This module defines a Signal dataclass (raw data + timing), a Metadata
+dataclass (organism/species/source/etc.) and a BioSignal wrapper that
+composes them. Converters should use BioSignal.from_parts(...) to build
+instances; BioSignal.save/load provide NPZ persistence compatible with
+previous format.
 """
+from __future__ import annotations
 
-# pylint: disable=invalid-name
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import List, Optional, Dict, Any
+
 import numpy as np
 from matplotlib import pyplot as plt
 
 
+@dataclass
+class Signal:
+    """Raw multichannel signal with timing information.
+
+    Attributes:
+        values: numpy array of shape (n_samples, n_channels)
+        fs: sampling frequency in Hz
+        channels: list of channel names
+        time: optional time axis (numpy array)
+    """
+
+    values: np.ndarray
+    fs: float
+    channels: List[str]
+    time: Optional[np.ndarray] = None
+
+    def __post_init__(self) -> None:
+        if self.time is None and self.values is not None and self.fs:
+            n_samples = int(self.values.shape[0])
+            self.time = np.linspace(0, n_samples / float(self.fs), n_samples, dtype=np.float64)
+
+
+@dataclass
+class Metadata:
+    """Recording metadata.
+
+    Keep this small and focused; arbitrary key/value pairs can be stored
+    in the ``extra`` dict.
+    """
+
+    organism: str = "unknown"
+    species: str = "unknown"
+    recording_type: str = "unknown"
+    units: str = "unknown"
+    source: str = "unknown"
+    extra: Dict[str, Any] = field(default_factory=dict)
+
+
 class BioSignal:
-    """
-    Container for multichannel biosignal recordings.
-    """
-    signal = None
-    time = None
-    fs = None
-    channels = None
-    organism = None
-    species = None
-    recording_type = None
-    units = None
-    source = None
-    metadata = None
+    """High-level BioSignal composed from Signal + Metadata.
 
-    def __init__(self, signal, fs, channels, time=None, organism=None, species=None,
-                 recording_type=None, units=None, source=None, metadata=None):
+    The class intentionally has a narrow public surface: a single
+    attribute for the signal and one for metadata. Use ``from_parts`` to
+    construct from primitive values (keeps converters concise without a
+    fat constructor).
+    """
+
+    def __init__(self, signal: Signal, metadata: Metadata):
         self.signal = signal
-        self.fs = fs
-        self.channels = channels
-        self.time = time if time is not None else self._generate_time_axis()
-        self.organism = organism or "unknown"
-        self.species = species or "unknown"
-        self.recording_type = recording_type or "unknown"
-        self.units = units or "unknown"
-        self.source = source or "unknown"
-        self.metadata = metadata or {}
+        self.metadata = metadata
 
-    def _generate_time_axis(self):
-        """Generate time axis based on signal length and sampling rate."""
-        if self.signal is None or self.fs is None:
-            return None
-        n_samples = self.signal.shape[0]
-        return np.linspace(0, n_samples / self.fs, n_samples, dtype=np.float64)
+    @classmethod
+    def from_parts(
+        cls,
+        values: np.ndarray,
+        fs: float,
+        channels: List[str],
+        time: Optional[np.ndarray] = None,
+        *,
+        organism: Optional[str] = None,
+        species: Optional[str] = None,
+        recording_type: Optional[str] = None,
+        units: Optional[str] = None,
+        source: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> "BioSignal":
+        """Convenience constructor used by converters.
 
-    # Backward compatibility properties
-    @property
-    def fd(self):
-        """Backward-compatible alias for sampling frequency (fs)."""
-        return self.fs
-
-    @property
-    def sample_rate(self):
-        """Alternate alias for sampling frequency (fs)."""
-        return self.fs
-
-    def save(self, file_path):
+        All metadata keyword arguments are optional and default to "unknown".
         """
-        Save BioSignal to NPZ file with rich metadata schema.
-        
-        Args:
-            file_path: Path to save NPZ file
+        sig = Signal(values=np.asarray(values, dtype=np.float32), fs=fs, channels=list(channels), time=time)
+        meta = Metadata(
+            organism=(organism or "unknown"),
+            species=(species or "unknown"),
+            recording_type=(recording_type or "unknown"),
+            units=(units or "unknown"),
+            source=(source or "unknown"),
+            extra=(extra or {}),
+        )
+        return cls(sig, meta)
+
+    def save(self, file_path: str) -> None:
+        """Save BioSignal to NPZ using the project's schema.
+
+        The file will contain arrays: signal, time, fs, channel_names and
+        string metadata fields. The `extra` dict is saved as a pickled
+        object via allow_pickle=True.
         """
+        path = Path(file_path)
         np.savez(
-            file_path,
-            signal=self.signal.astype(np.float32),
-            time=self.time.astype(np.float64) if self.time is not None else np.array([]),
-            fs=np.float32(self.fs),
-            channel_names=np.array(self.channels, dtype=object),
-            organism=self.organism,
-            species=self.species,
-            recording_type=self.recording_type,
-            units=self.units,
-            source=self.source,
-            metadata=np.array(self.metadata, dtype=object)
+            str(path),
+            signal=self.signal.values.astype(np.float32),
+            time=self.signal.time.astype(np.float64) if self.signal.time is not None else np.array([], dtype=np.float64),
+            fs=np.float32(self.signal.fs),
+            channel_names=np.array(self.signal.channels, dtype=object),
+            organism=self.metadata.organism,
+            species=self.metadata.species,
+            recording_type=self.metadata.recording_type,
+            units=self.metadata.units,
+            source=self.metadata.source,
+            metadata=np.array(self.metadata.extra, dtype=object),
         )
 
-    @staticmethod
-    def load(file_path):
-        """
-        Load BioSignal from NPZ file.
-        
-        Args:
-            file_path: Path to NPZ file
-            
-        Returns:
-            BioSignal object
+    @classmethod
+    def load(cls, file_path: str) -> "BioSignal":
+        """Load BioSignal from NPZ created by `save` or converters.
+
+        Returns a BioSignal instance with composed Signal and Metadata.
         """
         data = np.load(file_path, allow_pickle=True)
-
         time = data['time'] if len(data['time']) > 0 else None
-
-        return BioSignal(
-            signal=data['signal'],
-            fs=float(data['fs']),
-            channels=list(data['channel_names']),
-            time=time,
-            organism=str(data['organism']),
-            species=str(data['species']),
-            recording_type=str(data['recording_type']),
-            units=str(data['units']),
-            source=str(data['source']),
-            metadata=data['metadata'].item()
+        signal = data['signal']
+        fs = float(data['fs'])
+        channels = list(data['channel_names'])
+        metadata_obj = data['metadata'].tolist() if isinstance(data['metadata'], np.ndarray) else data['metadata']
+        extra = metadata_obj if isinstance(metadata_obj, dict) else {}
+        meta = Metadata(
+            organism=str(data.get('organism', 'unknown')),
+            species=str(data.get('species', 'unknown')),
+            recording_type=str(data.get('recording_type', 'unknown')),
+            units=str(data.get('units', 'unknown')),
+            source=str(data.get('source', 'unknown')),
+            extra=extra,
         )
+        sig = Signal(values=signal, fs=fs, channels=channels, time=time)
+        return cls(sig, meta)
 
-    def plot_original(self):
-        """
-        Plot the signal without any changes.
-        """
-        if self.signal is None:
+    # Backward-compatible aliases
+    @property
+    def fs(self) -> float:
+        return float(self.signal.fs)
+
+    def plot_original(self) -> None:
+        """Plot the raw recorded signal without normalization."""
+        if self.signal.values is None:
             print("No signal data to plot.")
             return
 
         plt.figure(figsize=(10, 6))
-        for i, channel in enumerate(self.channels):
-            plt.subplot(len(self.channels), 1, i + 1)
-            plt.plot(self.time, self.signal[:, i])
+        for i, channel in enumerate(self.signal.channels):
+            plt.subplot(len(self.signal.channels), 1, i + 1)
+            plt.plot(self.signal.time, self.signal.values[:, i])
             plt.xlabel("Time (s)")
             plt.ylabel(f"Channel {channel}")
             plt.title(f"Signal Plot - {channel}")
@@ -129,41 +166,35 @@ class BioSignal:
         plt.tight_layout()
         plt.show()
 
-    def plot(self, duration=60, max_signal=100, max_samples=100):
+    def plot(self, duration: Optional[float] = 60.0, max_signal: Optional[float] = 100.0, max_samples: Optional[int] = 100) -> None:
+        """Plot with optional resampling and normalization.
+
+        The method operates on a copy of the data so it does not mutate
+        the stored signal.
         """
-        Plot the signal with optional normalization.
-        
-        Args:
-            duration: Target duration in seconds (default 60). Signals shorter than this
-                     will be extended, longer signals will be compressed.
-            max_signal: Maximum signal amplitude for normalization. If provided, the signal
-                       will be scaled so the largest absolute value matches this value.
-            max_samples: Maximum number of samples to resample to. If provided, the signal
-                        will be resampled to have exactly this many samples.
-        """
-        if self.signal is None:
+        if self.signal.values is None:
             print("No signal data to plot.")
             return
 
-        signal = self.signal.copy()
-        time = self.time.copy() if self.time is not None else None
+        signal = self.signal.values.copy()
+        time = self.signal.time.copy() if self.signal.time is not None else None
 
         if max_samples is not None:
             signal = self._resample_signal(signal, max_samples)
             if time is not None:
-                time = np.linspace(0, duration, max_samples, dtype=np.float64)
+                time = np.linspace(0, float(duration), max_samples, dtype=np.float64)
         else:
             if time is not None:
-                current_duration = time[-1]
-                if current_duration != duration:
-                    time = np.linspace(0, duration, len(time), dtype=np.float64)
+                current_duration = float(time[-1])
+                if current_duration != float(duration):
+                    time = np.linspace(0, float(duration), len(time), dtype=np.float64)
 
         if max_signal is not None:
             signal = self._normalize_signal(signal, max_signal)
 
         plt.figure(figsize=(10, 6))
-        for i, channel in enumerate(self.channels):
-            plt.subplot(len(self.channels), 1, i + 1)
+        for i, channel in enumerate(self.signal.channels):
+            plt.subplot(len(self.signal.channels), 1, i + 1)
             plt.plot(time, signal[:, i])
             plt.xlabel("Time (s)")
             plt.ylabel(f"Channel {channel}")
@@ -173,63 +204,35 @@ class BioSignal:
         plt.tight_layout()
         plt.show()
 
-    def _resample_signal(self, signal, target_samples):
-        """
-        Resample signal to have exactly target_samples samples.
-        Uses linear interpolation.
-        
-        Args:
-            signal: Signal array of shape (n_samples, n_channels)
-            target_samples: Target number of samples
-            
-        Returns:
-            Resampled signal array
-        """
+    @staticmethod
+    def _resample_signal(signal: np.ndarray, target_samples: int) -> np.ndarray:
         n_channels = signal.shape[1]
-        resampled = np.zeros((target_samples, n_channels))
-
+        resampled = np.zeros((target_samples, n_channels), dtype=np.float32)
         old_indices = np.linspace(0, signal.shape[0] - 1, signal.shape[0])
         new_indices = np.linspace(0, signal.shape[0] - 1, target_samples)
-
         for i in range(n_channels):
             resampled[:, i] = np.interp(new_indices, old_indices, signal[:, i])
-
         return resampled
 
-    def _normalize_signal(self, signal, max_value):
-        """
-        Normalize signal so that the largest absolute value equals max_value.
-        Preserves the sign and relative magnitudes of peaks.
-        
-        Args:
-            signal: Signal array of shape (n_samples, n_channels)
-            max_value: Target maximum absolute value
-            
-        Returns:
-            Normalized signal array
-        """
+    @staticmethod
+    def _normalize_signal(signal: np.ndarray, max_value: float) -> np.ndarray:
         current_max = np.max(np.abs(signal))
-
         if current_max > 0:
-            signal = signal * (max_value / current_max)
-
+            signal = signal * (float(max_value) / float(current_max))
         return signal
 
-    def info(self):
-        """
-        Print detailed information about the BioSignal object.
-        """
+    def info(self) -> None:
         print("BioSignal Information:")
-        print(f"  Organism: {self.organism}")
-        print(f"  Species: {self.species}")
-        print(f"  Recording Type: {self.recording_type}")
-        print(f"  Units: {self.units}")
-        print(f"  Source: {self.source}")
-        print(f"  Sampling Rate (fs): {self.fs} Hz")
-        print(f"  Number of Channels: {len(self.channels)}")
-        print(f"  Channel Names: {', '.join(self.channels)}")
-        if self.signal is not None:
-            print(f"  Signal Shape: {self.signal.shape}")
-            print(f"  Time Axis Length: {len(self.time) if self.time is not None else 'N/A'}")
+        print(f"  Organism: {self.metadata.organism}")
+        print(f"  Species: {self.metadata.species}")
+        print(f"  Recording Type: {self.metadata.recording_type}")
+        print(f"  Units: {self.metadata.units}")
+        print(f"  Source: {self.metadata.source}")
+        print(f"  Sampling Rate (fs): {self.signal.fs} Hz")
+        print(f"  Number of Channels: {len(self.signal.channels)}")
+        print(f"  Channel Names: {', '.join(self.signal.channels)}")
+        if self.signal.values is not None:
+            print(f"  Signal Shape: {self.signal.values.shape}")
+            print(f"  Time Axis Length: {len(self.signal.time) if self.signal.time is not None else 'N/A'}")
         else:
             print("  Signal data is not available.")
