@@ -11,4 +11,3 @@ database = BioSignalDatabase(data_folder="./PlantyProject/data_converted")
 
 database.list_all()
 print(database.get_statistics())
-

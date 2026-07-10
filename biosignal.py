@@ -18,7 +18,6 @@ class BioSignal:
     """
     Container for multichannel biosignal recordings.
     """
-    # pylint: disable=too-many-instance-attributes
     signal = None
     time = None
     fs = None
