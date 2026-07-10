@@ -1,5 +1,12 @@
+"""EDF conversion helpers.
+
+Provides a small wrapper around pyedflib to convert EDF files into the
+BioSignal container. If pyedflib is not installed the converter will
+raise ImportError with a helpful message.
+"""
+
 import numpy as np
-from DataClasses import BioSignal
+from biosignal import BioSignal
 
 try:
     import pyedflib
@@ -59,7 +66,9 @@ def convert_edf(file_path, channels=None, organism=None, species=None,
             try:
                 phys_dim = edf_file.physical_dimension(ch_idx)
                 units_list.append(phys_dim if phys_dim else "unknown")
-            except:
+            except (AttributeError, IndexError, OSError):
+                # If extracting the physical dimension fails for a
+                # particular channel, record unknown and continue.
                 units_list.append("unknown")
 
         signal = np.array(signal_list).T

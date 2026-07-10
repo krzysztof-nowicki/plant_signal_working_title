@@ -1,3 +1,10 @@
+"""Scan a data folder and convert supported signal files to NPZ.
+
+This script walks the provided data folder and converts WAV, CSV and
+EDF files into the standardized BioSignal NPZ format using the
+converters in the ``converters`` package.
+"""
+
 import os
 import sys
 from pathlib import Path
@@ -154,7 +161,7 @@ def process_data_folder(data_folder='data', output_folder='data_converted'):
                 })
                 print("[OK]")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError) as e:
             error_msg = f"Error processing {relative_path}: {str(e)}"
             print(f"[FAILED] {error_msg}")
             errors.append(error_msg)
@@ -212,7 +219,7 @@ def process_data_folder(data_folder='data', output_folder='data_converted'):
     }
 
     report_path = output_path / 'conversion_report.json'
-    with open(report_path, 'w') as f:
+    with open(report_path, 'w', encoding='utf-8') as f:
         json.dump(report, f, indent=2)
     print(f"\nReport saved to: {report_path}")
 

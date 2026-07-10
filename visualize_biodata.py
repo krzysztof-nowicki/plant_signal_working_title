@@ -1,6 +1,12 @@
-from PlantyProject.DataClasses import BioSignal
+"""Example script to load and visualize a single BioSignal NPZ.
+
+This small script demonstrates loading a saved BioSignal and running
+the convenience info/plot helpers.
+"""
+
+from biosignal import BioSignal
+
 
 biosignal = BioSignal.load(r"D:\Planty\PlantyProject\data_converted\data.npz")
 biosignal.info()
-biosignal.plot()
-# biosignal.plot_original()
+biosignal.plot()  # biosignal.plot_original()

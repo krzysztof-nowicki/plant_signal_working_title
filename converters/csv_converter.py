@@ -1,8 +1,19 @@
+"""CSV converter helpers.
+
+This module converts simple CSV exports into the project's BioSignal
+container. It avoids heavy refactoring to keep behavior stable; the
+function signature is intentionally wide to preserve downstream callers.
+"""
+
 import pandas as pd
 import numpy as np
-from DataClasses import BioSignal
+from biosignal import BioSignal
 
 
+# The converter function is intentionally permissive in the number of
+# keyword arguments it accepts (they are mapped into metadata).
+# Disable pylint too-many-arguments warnings for backwards compatibility.
+# pylint: disable=too-many-arguments, too-many-positional-arguments
 def convert_csv(
         file_path,
         fs=1,

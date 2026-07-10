@@ -1,15 +1,23 @@
+"""Utilities for querying the converted BioSignal NPZ database.
+
+Provides a small helper class to read the conversion report and load
+BioSignal objects by simple filters.
+"""
+
 import json
-from enum import Enum, auto
+from enum import Enum
 from pathlib import Path
 from typing import List, Dict
-from DataClasses import BioSignal
+from biosignal import BioSignal
 
 
-class BioSignalOrganismType:
-    Human = "human"
-    Plant = "plant"
-    Mushroom = "fungi"
-    Unknown = "unknown"
+class BioSignalOrganismType(Enum):
+    """Enumerated organism types used by the converters and database."""
+
+    HUMAN = "human"
+    PLANT = "plant"
+    MUSHROOM = "fungi"
+    UNKNOWN = "unknown"
 
 
 class BioSignalDatabase:
@@ -23,7 +31,7 @@ class BioSignalDatabase:
     def _load_file_list(self):
         """Load file manifest from conversion report."""
         if self.report_path.exists():
-            with open(self.report_path, 'r') as f:
+            with open(self.report_path, 'r', encoding='utf-8') as f:
                 report = json.load(f)
                 return report.get('files_processed', [])
         else:
@@ -56,8 +64,9 @@ class BioSignalDatabase:
             try:
                 bio = self.load_signal(f['output'])
                 signals.append((f['output'], bio))
-            except Exception as e:
-                print(f"[SKIP] {f['output']}: {e}")
+            except (OSError, IOError, ValueError) as exc:
+                # Skip files we cannot read or parse and report the cause.
+                print(f"[SKIP] {f['output']}: {exc}")
 
         return signals
 

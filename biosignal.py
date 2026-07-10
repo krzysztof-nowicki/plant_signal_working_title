@@ -1,11 +1,24 @@
+"""Core BioSignal container and helpers.
+
+This module provides the BioSignal class used across the project to
+represent multichannel time series along with simple I/O and plotting
+utilities.
+
+The module name is intentionally kept PascalCase for historical
+compatibility with the rest of the project; pylint's "invalid-name"
+warning is disabled for the module.
+"""
+
+# pylint: disable=invalid-name
 import numpy as np
 from matplotlib import pyplot as plt
 
 
 class BioSignal:
     """
-    Base class for BioSignal data.
+    Container for multichannel biosignal recordings.
     """
+    # pylint: disable=too-many-instance-attributes
     signal = None
     time = None
     fs = None
@@ -40,10 +53,12 @@ class BioSignal:
     # Backward compatibility properties
     @property
     def fd(self):
+        """Backward-compatible alias for sampling frequency (fs)."""
         return self.fs
 
     @property
     def sample_rate(self):
+        """Alternate alias for sampling frequency (fs)."""
         return self.fs
 
     def save(self, file_path):

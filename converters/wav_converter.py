@@ -1,8 +1,18 @@
+"""WAV file conversion helpers.
+
+Convert WAV PCM data into the project's BioSignal container. The
+function keeps a broad argument list for compatibility with the other
+converters and downstream code.
+"""
+
 import wave
 import numpy as np
-from DataClasses import BioSignal
+from biosignal import BioSignal
 
 
+# Keep the converter API compatible with other converters; disable the
+# too-many-arguments warning for this function.
+# pylint: disable=too-many-arguments, too-many-positional-arguments
 def convert_wav(file_path, channels=None, organism=None, species=None,
                 recording_type=None, units=None, source=None):
     """
