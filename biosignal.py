@@ -69,24 +69,28 @@ class BioSignal:
 
     @classmethod
     def from_parts(
-        cls,
-        values: np.ndarray,
-        fs: float,
-        channels: List[str],
-        time: Optional[np.ndarray] = None,
-        *,
-        organism: Optional[str] = None,
-        species: Optional[str] = None,
-        recording_type: Optional[str] = None,
-        units: Optional[str] = None,
-        source: Optional[str] = None,
-        extra: Optional[Dict[str, Any]] = None,
+            cls,
+            values: np.ndarray,
+            fs: float,
+            channels: List[str],
+            time: Optional[np.ndarray] = None,
+            *,
+            organism: Optional[str] = None,
+            species: Optional[str] = None,
+            recording_type: Optional[str] = None,
+            units: Optional[str] = None,
+            source: Optional[str] = None,
+            extra: Optional[Dict[str, Any]] = None,
     ) -> "BioSignal":
         """Convenience constructor used by converters.
 
         All metadata keyword arguments are optional and default to "unknown".
         """
-        sig = Signal(values=np.asarray(values, dtype=np.float32), fs=fs, channels=list(channels), time=time)
+        sig = Signal(
+            values=np.asarray(values, dtype=np.float32),
+            fs=fs,
+            channels=list(channels),
+            time=time)
         meta = Metadata(
             organism=(organism or "unknown"),
             species=(species or "unknown"),
@@ -108,7 +112,8 @@ class BioSignal:
         np.savez(
             str(path),
             signal=self.signal.values.astype(np.float32),
-            time=self.signal.time.astype(np.float64) if self.signal.time is not None else np.array([], dtype=np.float64),
+            time=self.signal.time.astype(np.float64) if self.signal.time is not None else np.array([],
+                                                                                                   dtype=np.float64),
             fs=np.float32(self.signal.fs),
             channel_names=np.array(self.signal.channels, dtype=object),
             organism=self.metadata.organism,
@@ -143,9 +148,9 @@ class BioSignal:
         sig = Signal(values=signal, fs=fs, channels=channels, time=time)
         return cls(sig, meta)
 
-    # Backward-compatible aliases
     @property
     def fs(self) -> float:
+        """Frequency of signal in Hz."""
         return float(self.signal.fs)
 
     def plot_original(self) -> None:
@@ -166,7 +171,8 @@ class BioSignal:
         plt.tight_layout()
         plt.show()
 
-    def plot(self, duration: Optional[float] = 60.0, max_signal: Optional[float] = 100.0, max_samples: Optional[int] = 100) -> None:
+    def plot(self, duration: Optional[float] = 60.0, max_signal: Optional[float] = 100.0,
+             max_samples: Optional[int] = 100) -> None:
         """Plot with optional resampling and normalization.
 
         The method operates on a copy of the data so it does not mutate
