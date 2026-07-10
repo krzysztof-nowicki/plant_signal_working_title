@@ -3,12 +3,11 @@ import sys
 from pathlib import Path
 import json
 
-sys.path.insert(0, str(Path(__file__).parent))
-
 from converters.wav_converter import convert_wav
 from converters.csv_converter import convert_csv
 from converters.edf_converter import convert_edf
 
+sys.path.insert(0, str(Path(__file__).parent))
 
 def detect_organism_from_path(file_path):
     """
@@ -220,8 +219,8 @@ def process_data_folder(data_folder='data', output_folder='data_converted'):
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-        data_folder = sys.argv[1]
-        output_folder = sys.argv[2] if len(sys.argv) > 2 else 'data_converted'
-        process_data_folder(data_folder, output_folder)
+        data_folder_system = sys.argv[1]
+        output_folder_system = sys.argv[2] if len(sys.argv) > 2 else 'data_converted'
+        process_data_folder(data_folder_system, output_folder_system)
     else:
         process_data_folder()

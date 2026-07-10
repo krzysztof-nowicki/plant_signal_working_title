@@ -1,5 +1,5 @@
 import numpy as np
-from PlantyProject.DataClasses import BioSignal
+from DataClasses import BioSignal
 
 try:
     import pyedflib
@@ -28,11 +28,11 @@ def convert_edf(file_path, channels=None, organism=None, species=None,
     """
     if pyedflib is None:
         raise ImportError("pyedflib is required. Install with: pip install pyedflib")
-    
+
     with pyedflib.EdfReader(file_path) as edf_file:
         n_channels = edf_file.signals_in_file
         fs = edf_file.samplefrequency(0)
-        
+
         if channels is None:
             channels_to_read = list(range(n_channels))
         else:
@@ -44,30 +44,30 @@ def convert_edf(file_path, channels=None, organism=None, species=None,
                     signal_labels = edf_file.getSignalLabels()
                     if ch in signal_labels:
                         channels_to_read.append(signal_labels.index(ch))
-        
+
         signal_list = []
         channel_names = []
         units_list = []
-        
+
         for ch_idx in channels_to_read:
             signal_data = edf_file.readSignal(ch_idx)
             signal_list.append(signal_data.astype(np.float32))
             label = edf_file.getSignalLabels()[ch_idx]
             channel_names.append(label)
-            
+
             # Try to extract units from signal info
             try:
                 phys_dim = edf_file.physical_dimension(ch_idx)
                 units_list.append(phys_dim if phys_dim else "unknown")
             except:
                 units_list.append("unknown")
-        
+
         signal = np.array(signal_list).T
         n_samples = signal.shape[0]
         time = np.linspace(0, n_samples / fs, n_samples, dtype=np.float64)
-        
+
         file_header = edf_file.getHeader()
-    
+
     metadata = {
         'source_file': str(file_path),
         'patient_name': file_header.get('patient_name', ''),
@@ -75,7 +75,7 @@ def convert_edf(file_path, channels=None, organism=None, species=None,
         'units_per_channel': units_list,
         'original_format': 'EDF'
     }
-    
+
     return BioSignal(
         signal=signal,
         fs=fs,
@@ -88,5 +88,3 @@ def convert_edf(file_path, channels=None, organism=None, species=None,
         source=source or "EDF_recording",
         metadata=metadata
     )
-
-

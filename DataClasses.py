@@ -3,6 +3,9 @@ from matplotlib import pyplot as plt
 
 
 class BioSignal:
+    """
+    Base class for BioSignal data.
+    """
     signal = None
     time = None
     fs = None

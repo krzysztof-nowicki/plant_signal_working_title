@@ -1,17 +1,17 @@
 import pandas as pd
 import numpy as np
-from PlantyProject.DataClasses import BioSignal
+from DataClasses import BioSignal
 
 
 def convert_csv(
-    file_path,
-    fs=1,
-    channels=None,
-    organism=None,
-    species=None,
-    recording_type=None,
-    units=None,
-    source=None
+        file_path,
+        fs=1,
+        channels=None,
+        organism=None,
+        species=None,
+        recording_type=None,
+        units=None,
+        source=None
 ):
     """
     Convert CSV file to BioSignal object.
@@ -38,7 +38,7 @@ def convert_csv(
     time = np.arange(n_samples, dtype=np.float64) / fs
 
     if channels is None:
-        channels = [f"Ch{i+1}" for i in range(signal.shape[1])]
+        channels = [f"Ch{i + 1}" for i in range(signal.shape[1])]
 
     metadata = {
         "source_file": str(file_path),
@@ -50,7 +50,7 @@ def convert_csv(
     }
 
     return BioSignal(
-        signal=signal,          # (samples, channels)
+        signal=signal,  # (samples, channels)
         fs=fs,
         channels=channels,
         time=time,
