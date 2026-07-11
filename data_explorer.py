@@ -9,5 +9,6 @@ from biosignal_database import BioSignalDatabase
 
 database = BioSignalDatabase(data_folder="./data_converted")
 
-database.list_all()
-print(database.get_statistics())
+# database.list_all()
+# print(database.get_statistics())
+print(database.filter_by_organism("fungi"))
