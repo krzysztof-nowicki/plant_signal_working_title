@@ -6,7 +6,7 @@ raise ImportError with a helpful message.
 """
 
 import numpy as np
-from biosignal import BioSignal
+from data_classes.biosignal import BioSignal
 
 try:
     import pyedflib

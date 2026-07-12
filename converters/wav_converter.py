@@ -7,7 +7,7 @@ converters and downstream code.
 
 import wave
 import numpy as np
-from biosignal import BioSignal
+from data_classes.biosignal import BioSignal
 
 
 # Keep the converter API compatible with other converters; disable the

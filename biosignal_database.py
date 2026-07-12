@@ -8,7 +8,7 @@ import json
 from enum import Enum
 from pathlib import Path
 from typing import List, Dict
-from biosignal import BioSignal
+from data_classes.biosignal import BioSignal
 
 
 class BioSignalOrganismType(Enum):

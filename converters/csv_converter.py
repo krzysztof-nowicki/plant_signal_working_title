@@ -7,7 +7,7 @@ function signature is intentionally wide to preserve downstream callers.
 
 import pandas as pd
 import numpy as np
-from biosignal import BioSignal
+from data_classes.biosignal import BioSignal
 
 
 # The converter function is intentionally permissive in the number of
