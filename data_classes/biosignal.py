@@ -32,18 +32,19 @@ class BioMetadata:
     extra: Dict[str, Any] = field(default_factory=dict)
 
 
-class BioSignal:
-    """High-level BioSignal composed from Signal + BioMetadata.
+class BioSignal(Signal):
+    """High-level BioSignal with Signal data + BioMetadata.
 
-    The class intentionally has a narrow public surface: a single
-    attribute for the signal and one for metadata. Use 'from_parts' to
-    construct from primitive values (keeps converters concise without a
-    fat constructor).
+    Inherits plotting and signal methods from Signal.
+    Use 'from_parts' to construct from primitive values.
     """
 
-    def __init__(self, signal: Signal, metadata: BioMetadata):
-        self.signal = signal
-        self.metadata = metadata
+    metadata: BioMetadata = None
+
+    def __init__(self, values: np.ndarray, fs: float, channels: List[str],
+                 time: Optional[np.ndarray] = None, metadata: Optional[BioMetadata] = None):
+        super().__init__(values=values, fs=fs, channels=channels, time=time)
+        self.metadata = metadata or BioMetadata()
 
     @classmethod
     def from_parts(
@@ -64,11 +65,6 @@ class BioSignal:
 
         All metadata keyword arguments are optional and default to "unknown".
         """
-        sig = Signal(
-            values=np.asarray(values, dtype=np.float32),
-            fs=fs,
-            channels=list(channels),
-            time=time)
         meta = BioMetadata(
             organism=(organism or "unknown"),
             species=(species or "unknown"),
@@ -77,7 +73,12 @@ class BioSignal:
             source=(source or "unknown"),
             extra=(extra or {}),
         )
-        return cls(sig, meta)
+        return cls(
+            values=np.asarray(values, dtype=np.float32),
+            fs=fs,
+            channels=list(channels),
+            time=time,
+            metadata=meta)
 
     def save(self, file_path: str) -> None:
         """Save BioSignal to NPZ using the project's schema.
@@ -89,11 +90,11 @@ class BioSignal:
         path = Path(file_path)
         np.savez(
             str(path),
-            signal=self.signal.values.astype(np.float32),
-            time=self.signal.time.astype(np.float64) if self.signal.time is not None else np.array([],
-                                                                                                   dtype=np.float64),
-            fs=np.float32(self.signal.fs),
-            channel_names=np.array(self.signal.channels, dtype=object),
+            signal=self.values.astype(np.float32),
+            time=self.time.astype(np.float64) if self.time is not None else np.array([],
+                                                                                     dtype=np.float64),
+            fs=np.float32(self.fs),
+            channel_names=np.array(self.channels, dtype=object),
             organism=self.metadata.organism,
             species=self.metadata.species,
             recording_type=self.metadata.recording_type,
@@ -106,7 +107,7 @@ class BioSignal:
     def load(cls, file_path: str) -> "BioSignal":
         """Load BioSignal from NPZ created by `save` or converters.
 
-        Returns a BioSignal instance with composed Signal and Metadata.
+        Returns a BioSignal instance with Signal data and Metadata.
         """
         data = np.load(file_path, allow_pickle=True)
         time = data['time'] if len(data['time']) > 0 else None
@@ -123,54 +124,21 @@ class BioSignal:
             source=str(data.get('source', 'unknown')),
             extra=extra,
         )
-        sig = Signal(values=signal, fs=fs, channels=channels, time=time)
-        return cls(sig, meta)
-
-    @property
-    def fs(self) -> float:
-        """Frequency of signal in Hz."""
-        return float(self.signal.fs)
-
-    def plot_original(self) -> None:
-        """Plot the raw recorded signal without normalization."""
-        # Delegate to the underlying Signal implementation.
-        if hasattr(self.signal, "plot_original"):
-            return self.signal.plot_original()
-        # Fallback: simple check and message
-        if self.signal.values is None:
-            print("No signal data to plot.")
-            return
-        print("Signal plotting is not available for this signal type.")
-
-    def plot(self, duration: Optional[float] = 60.0, max_signal: Optional[float] = 100.0,
-             max_samples: Optional[int] = 100) -> None:
-        """Plot with optional resampling and normalization.
-
-        The method operates on a copy of the data so it does not mutate
-        the stored signal.
-        """
-        # Delegate plotting to Signal/MusicSignal implementation so plotting
-        # behaviour is consistent and located next to signal-level logic.
-        if hasattr(self.signal, "plot"):
-            return self.signal.plot(duration=duration, max_signal=max_signal, max_samples=max_samples)
-        if self.signal.values is None:
-            print("No signal data to plot.")
-            return
-        print("Signal plotting is not available for this signal type.")
+        return cls(values=signal, fs=fs, channels=channels, time=time, metadata=meta)
 
     def info(self) -> None:
-        """Print information about the all the BioSingal attributes."""
+        """Print information about all BioSignal attributes."""
         print("BioSignal Information:")
         print(f"  Organism: {self.metadata.organism}")
         print(f"  Species: {self.metadata.species}")
         print(f"  Recording Type: {self.metadata.recording_type}")
         print(f"  Units: {self.metadata.units}")
         print(f"  Source: {self.metadata.source}")
-        print(f"  Sampling Rate (fs): {self.signal.fs} Hz")
-        print(f"  Number of Channels: {len(self.signal.channels)}")
-        print(f"  Channel Names: {', '.join(self.signal.channels)}")
-        if self.signal.values is not None:
-            print(f"  Signal Shape: {self.signal.values.shape}")
-            print(f"  Time Axis Length: {len(self.signal.time) if self.signal.time is not None else 'N/A'}")
+        print(f"  Sampling Rate (fs): {self.fs} Hz")
+        print(f"  Number of Channels: {len(self.channels)}")
+        print(f"  Channel Names: {', '.join(self.channels)}")
+        if self.values is not None:
+            print(f"  Signal Shape: {self.values.shape}")
+            print(f"  Time Axis Length: {len(self.time) if self.time is not None else 'N/A'}")
         else:
             print("  Signal data is not available.")

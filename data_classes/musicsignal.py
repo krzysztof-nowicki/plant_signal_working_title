@@ -1,10 +1,12 @@
 """
-MusicSignal subclass that adds a baseline and region/limit parameters
-commonly useful when rendering musical signals.
+MusicSignal subclass for musical signal data with MusicMetadata.
 """
-from dataclasses import dataclass, field
-from typing import Dict, Any
+from __future__ import annotations
 
+from dataclasses import dataclass, field
+from typing import Dict, Any, List, Optional
+
+import numpy as np
 from data_classes.signal import Signal
 
 
@@ -23,16 +25,16 @@ class MusicMetadata:
     extra: Dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass
 class MusicSignal(Signal):
     """Specialized Signal for musical data.
 
-    Adds a baseline value (DC offset) and convenience plotting parameters
-    to limit shown region (start/end times). The plotting method keeps the
-    same signature as Signal.plot with extra optional parameters for
-    region limiting.
+    Inherits plotting and signal methods from Signal.
+    Adds MusicMetadata for music-specific information.
     """
 
-    def __init__(self, signal: Signal, metadata: MusicMetadata):
-        self.signal = signal
-        self.metadata = metadata
+    metadata: MusicMetadata = None
+
+    def __init__(self, values: np.ndarray, fs: float, channels: List[str],
+                 time: Optional[np.ndarray] = None, metadata: Optional[MusicMetadata] = None):
+        super().__init__(values=values, fs=fs, channels=channels, time=time)
+        self.metadata = metadata or MusicMetadata()
