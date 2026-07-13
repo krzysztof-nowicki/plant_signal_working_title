@@ -2,7 +2,7 @@
 
 This script walks the provided data folder and converts WAV, CSV and
 EDF files into the standardized BioSignal NPZ format using the
-converters in the ``converters`` package.
+converters in the 'converters' package.
 """
 
 import os

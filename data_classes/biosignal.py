@@ -21,7 +21,7 @@ class BioMetadata:
     """Recording metadata.
 
     Keep this small and focused; arbitrary key/value pairs can be stored
-    in the ``extra`` dict.
+    in the 'extra' dict.
     """
 
     organism: str = "unknown"
@@ -36,7 +36,7 @@ class BioSignal:
     """High-level BioSignal composed from Signal + BioMetadata.
 
     The class intentionally has a narrow public surface: a single
-    attribute for the signal and one for metadata. Use ``from_parts`` to
+    attribute for the signal and one for metadata. Use 'from_parts' to
     construct from primitive values (keeps converters concise without a
     fat constructor).
     """

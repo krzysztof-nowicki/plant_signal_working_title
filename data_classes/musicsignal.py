@@ -13,7 +13,7 @@ class MusicMetadata:
     """Recording metadata.
 
     Keep this small and focused; arbitrary key/value pairs can be stored
-    in the ``extra`` dict.
+    in the 'extra' dict.
     """
 
     author: str = "unknown"
