@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 
 import numpy as np
-from data_classes.signal import Signal
+from data_classes.signal_base import Signal
 
 
 @dataclass

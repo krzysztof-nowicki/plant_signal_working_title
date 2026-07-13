@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional
 
 import numpy as np
-from data_classes.signal import Signal
+from data_classes.signal_base import Signal
 
 
 @dataclass
