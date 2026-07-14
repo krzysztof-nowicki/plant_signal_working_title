@@ -11,6 +11,8 @@ __pycache__/
 .idea/
 data/
 data_converted/
+data_music/
+music_data_converted/
 build/
 develop-eggs/
 dist/

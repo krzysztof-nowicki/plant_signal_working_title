@@ -8,9 +8,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import List, Optional
+import warnings
 
 import numpy as np
 from matplotlib import pyplot as plt
+
+try:
+    from scipy import signal as scipy_signal
+    from scipy.io import wavfile
+except ImportError:
+    scipy_signal = None
+    wavfile = None
 
 
 @dataclass
@@ -34,6 +42,65 @@ class Signal:
             n_samples = int(self.values.shape[0])
             # time from 0 to duration (inclusive of last sample)
             self.time = np.linspace(0, n_samples / float(self.fs), n_samples, dtype=np.float64)
+
+    def listen(self, volume: float = 1.0, play_speed: float = 1.0) -> None:
+        """Play the signal as audio.
+
+        Args:
+            volume: Volume multiplier (0.0 to 1.0, default 1.0)
+            play_speed: Playback speed multiplier (0.5 to 2.0, default 1.0)
+        """
+        if scipy_signal is None or wavfile is None:
+            print("Error: scipy is required for audio playback. Install with: pip install scipy")
+            return
+
+        if self.values is None or len(self.values) == 0:
+            print("No signal data to play.")
+            return
+
+        try:
+            import sounddevice as sd
+        except ImportError:
+            print("Error: sounddevice is required for audio playback. Install with: pip install sounddevice")
+            return
+
+        # Prepare audio data
+        audio_data = self.values.copy().astype(np.float32)
+
+        # Handle multi-channel by converting to mono (average channels)
+        if len(audio_data.shape) > 1 and audio_data.shape[1] > 1:
+            audio_data = np.mean(audio_data, axis=1, keepdims=True)
+
+        # Normalize to [-1, 1] range
+        max_val = np.max(np.abs(audio_data))
+        if max_val > 0:
+            audio_data = audio_data / max_val
+
+        # Apply volume
+        audio_data = audio_data * float(volume)
+
+        # Ensure values are within [-1, 1] to prevent clipping
+        audio_data = np.clip(audio_data, -1.0, 1.0)
+
+        # Apply playback speed by resampling
+        if play_speed != 1.0:
+            current_length = len(audio_data)
+            new_length = int(current_length / float(play_speed))
+            if new_length > 0:
+                indices = np.linspace(0, current_length - 1, new_length)
+                audio_data = np.interp(indices, np.arange(current_length), audio_data.flatten())
+                audio_data = audio_data.reshape(-1, 1)
+
+        # Adjust sampling frequency for playback speed
+        playback_fs = int(self.fs * float(play_speed))
+
+        print(f"Playing audio: {len(audio_data) / playback_fs:.2f}s at {playback_fs} Hz, volume={volume}, speed={play_speed}x")
+        try:
+            sd.play(audio_data, samplerate=playback_fs)
+            sd.wait()
+            print("Playback finished.")
+        except Exception as e:
+            print(f"Error during playback: {e}")
 
     def plot_original(self) -> None:
         """Plot the raw recorded signal without normalization."""
