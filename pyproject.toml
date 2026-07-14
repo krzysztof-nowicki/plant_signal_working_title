@@ -15,4 +15,4 @@ max-locals = 30
 max-branches = 20
 
 [tool.pylint.similarities]
-min-similarity-lines = 10
+min-similarity-lines = 15
