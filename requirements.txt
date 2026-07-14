@@ -4,7 +4,7 @@ fonttools==4.63.0
 kiwisolver==1.5.0
 librosa==0.11.0
 matplotlib==3.11.0
-numpy==2.5.1
+numpy==2.4.6
 packaging==26.2
 pandas==3.0.3
 pillow==12.3.0
@@ -16,3 +16,4 @@ six==1.17.0
 soundfile==0.14.0
 tzdata==2026.3
 sounddevice==0.5.5
+numba==0.66.0
