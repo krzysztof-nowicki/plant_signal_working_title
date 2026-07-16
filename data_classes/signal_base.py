@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import List, Optional
-import warnings
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -59,6 +58,7 @@ class Signal:
             return
 
         try:
+            # pylint: disable=import-outside-toplevel
             import sounddevice as sd
         except ImportError:
             print("Error: sounddevice is required for audio playback. Install with: pip install sounddevice")
@@ -94,12 +94,13 @@ class Signal:
         # Adjust sampling frequency for playback speed
         playback_fs = int(self.fs * float(play_speed))
 
-        print(f"Playing audio: {len(audio_data) / playback_fs:.2f}s at {playback_fs} Hz, volume={volume}, speed={play_speed}x")
+        print(f"Playing audio: {len(audio_data) / playback_fs:.2f}s "
+              f"at {playback_fs} Hz, volume={volume}, speed={play_speed}x")
         try:
             sd.play(audio_data, samplerate=playback_fs)
             sd.wait()
             print("Playback finished.")
-        except Exception as e:
+        except sd.PortAudioError as e:
             print(f"Error during playback: {e}")
 
     def plot_original(self) -> None:

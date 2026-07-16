@@ -85,7 +85,7 @@ class MusicSignal(Signal):
 
     def info(self) -> None:
         """Print information about the MusicSignal instance."""
-        print(f"MusicSignal:")
+        print("MusicSignal:")
         print(f"  Channels: {self.channels}")
         print(f"  Sampling Rate (fs): {self.fs} Hz")
         print(f"  Number of Samples: {self.values.shape[0]}")

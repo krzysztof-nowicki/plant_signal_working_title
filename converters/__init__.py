@@ -20,4 +20,3 @@ __all__ = [
     'convert_mp3',
     'music_signal_to_mp3',
 ]
-

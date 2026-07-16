@@ -5,13 +5,11 @@ standardized MusicSignal NPZ format using the converter from the
 'converters' package.
 """
 
-import os
 import sys
 from pathlib import Path
 import json
 
 from converters.mp3_converter import convert_mp3
-from data_classes.musicsignal import MusicSignal
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -118,7 +116,7 @@ def process_music_folder(data_folder='data_music', output_folder='music_data_con
 
         except (OSError, IOError, ValueError, RuntimeError) as e:
             error_msg = f"Error processing {relative_path}: {str(e)}"
-            print(f"[FAILED]")
+            print("[FAILED]")
             errors.append(error_msg)
             stats['mp3']['failed'] += 1
 
@@ -182,4 +180,3 @@ if __name__ == '__main__':
         process_music_folder(data_folder_system, output_folder_system)
     else:
         process_music_folder()
-

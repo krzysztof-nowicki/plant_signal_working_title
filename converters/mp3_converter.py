@@ -46,7 +46,7 @@ def convert_mp3(file_path, channels=None, author=None, music_type=None,
     try:
         y, fs = librosa.load(file_path, sr=None, mono=False)
     except Exception as e:
-        raise RuntimeError(f"Failed to load MP3 file '{file_path}': {e}")
+        raise RuntimeError(f"Failed to load MP3 file '{file_path}': {e}")  from e
 
     # Ensure we have 2D array (n_samples, n_channels)
     if len(y.shape) == 1:
@@ -131,6 +131,7 @@ def music_signal_to_mp3(music_signal, output_path: str) -> None:
     if output_path.lower().endswith('.mp3'):
         # Try to use pydub to convert to MP3
         try:
+            # pylint: disable=import-outside-toplevel
             import tempfile
             from pydub import AudioSegment
 
@@ -148,4 +149,3 @@ def music_signal_to_mp3(music_signal, output_path: str) -> None:
         # Save as WAV
         wavfile.write(output_path, int(music_signal.fs), audio_data)
         print(f"Successfully saved WAV to: {output_path}")
-
