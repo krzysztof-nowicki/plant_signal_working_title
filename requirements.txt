@@ -17,3 +17,4 @@ soundfile==0.14.0
 tzdata==2026.3
 sounddevice==0.5.5
 numba==0.66.0
+pretty_midi==0.2.11
