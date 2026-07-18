@@ -160,10 +160,10 @@ def process_music_folder(input_folder: str, output_folder: str):
 
 
 if __name__ == "__main__":
-    input_folder = './data_music/midi_classical'
-    output_folder = './music_data_converted/midi_classical'
+    input_folder_coded = './data_music/FAM'
+    output_folder_coded = './music_data_converted/FAM'
 
     process_music_folder(
-        input_folder,
-        output_folder,
+        input_folder_coded,
+        output_folder_coded,
     )

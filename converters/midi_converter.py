@@ -12,12 +12,6 @@ try:
 except ImportError:
     pretty_midi = None
 
-try:
-    from scipy.io import wavfile
-except ImportError:
-    wavfile = None
-
-
 # pylint: disable=too-many-arguments, too-many-positional-arguments
 def convert_midi(file_path, channels=None, author=None, music_type=None,
                  length=None, source=None, fs=44100):
